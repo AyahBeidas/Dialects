@@ -32,5 +32,5 @@ The LLMs were evaluated using well-known and solid performance metrics, the code
 - **UniversalSimilarityEncoder.rtf**
 
 # Output files:
-- **JO-Output-MADAR.csv**: represents part of the output data, the first 2 columns are already did by the developers in the step of pre-processing. The third column is the model response.
-- **JO-Output-QADI.csv**: represents part of the output data, the first column is ready from the dataset, the second column is through the back translation to create the baseline. The third column is the model response.
+- **JO-Output-MADAR.xlsx**: represents part of the output data, the first 2 columns are already did by the developers in the step of pre-processing. The third column is the model response.
+- **JO-Output-QADI.xlsx**: represents part of the output data, the first column is ready from the dataset, the second column is through the back translation to create the baseline. The third column is the model response.
