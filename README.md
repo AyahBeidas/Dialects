@@ -8,6 +8,14 @@ Datasets used:
 
 **MADAR:** https://sites.google.com/nyu.edu/madar/
 
+Data Pre-processing:
+- For QADI dataset, the data was clean and well-balanced, we applied random sampling approach to select 50K samples.
+- For the MADAR dataset, the original version included multiple city dialects, with an inconsistent number of sentences per city. To prepare our dataset, we performed the following steps:
+  1. Identified the smallest available number of sentences across cities (2,000).
+  2. Retained only datasets corresponding to country capitals, excluding other cities.
+  3. Listed the sentences for each country separately, with the MSA baseline stored in a separate file.
+  4. For each country, created a .CSV file containing two columns (Dialect and MSA). Sentences were gathered and mapped using their original IDs from the source files.
+
 # API Calls and Scripts:
 - **GPT.txt**: represents the script to call API requests to GPT 3.5/4 for MADAR dataset.
 - **GPT-QADI.txt**: represents the script to call API requests to GPT 3.5/4 for QADI dataset.
