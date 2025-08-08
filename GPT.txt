@@ -1,0 +1,115 @@
+//This shows the code to run data on GPT 3.5 or GPT 4. This prompt showing the few shots and for zero-shot the examples are removed
+
+
+import { OpenAI } from "openai";
+import * as readline from 'readline';
+import * as fs from 'fs';
+import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
+ 
+const openai = new OpenAI({ apiKey: "YOUR_API_KEY" });
+ 
+const filePath = 'MADAR/MSA.txt';
+ 
+const readStream = fs.createReadStream(filePath, { encoding: 'utf8' });
+const rl = readline.createInterface({
+  input: readStream,
+  crlfDelay: Infinity, // Recognize both '\n' and '\r\n' as line endings
+});
+ 
+const csvWriter = createCsvWriter({
+  path: 'TunisFewShot.csv',
+  header: [
+    { id: 'MSA', title: 'Modern Standard Arabic'},
+    { id: 'MSAtoD', title: 'Modern Standard Arabic to Dialectal'},
+  ]
+});
+ 
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+ 
+let array = [];
+ 
+const processLine = async (line) => {
+  let sentence = line;
+  array.push({ MSA: sentence, MSAtoD: ""});
+};
+ 
+rl.on('line', async (line) => {
+  if (line) {
+    await processLine(line);
+  }
+});
+ 
+rl.on('close', () => {
+  console.log("Done");
+});
+ 
+await delay(1500);
+ 
+for (let i = 0; i < array.length; i += 10) {
+  let tmpArray = array.slice(i, i + 10);
+  //console.log("---------------- tmpArray array ----------------- \n", tmpArray);
+  //console.log("---------------- end tmpArray array ----------------- \n");
+  const trans = await openai.chat.completions.create({
+    model: "gpt-4",
+    messages: [{
+      role: "user",
+      content: `The following array has multiple JSON objects, each containing two keys: MSA, representing the Modern Standard Arabic sentence, and MSAtoD, which is the translation of MSA to Tunisian Arabic. Your task is to complete the MSAtoD field in the array with appropriate translations. Below are examples of MSA sentences and their translations into Tunisian Arabic:
+ 
+      1. MSA: "مرحبا، كيف حالك؟"
+         MSAtoD: "مرحبا، شحالك؟"
+       
+      2. MSA: "كم الساعة الآن؟"
+         MSAtoD: "شحال فالعداد؟"
+       
+      3. MSA: "هل يمكنك مساعدتي من فضلك؟"
+         MSAtoD: "تقدر تعاونني من فضلك؟"
+       
+      Complete the MSAtoD field in the array with the appropriate translations. Here's the array:
+      ${JSON.stringify({ tmpArray })}`
+    }],
+    temperature: 0.7
+  });
+ 
+  await delay(100);
+ 
+  let result = trans.choices[0].message.content;
+ 
+  console.log("\n Result before parse:", result);
+  console.log("\n typeof:", typeof result);
+ 
+  let flag = false;
+ 
+  while(!flag){
+    console.log("\n parse");
+    try {
+    result = JSON.parse(result);
+    flag = true;
+    } catch (error) {
+      console.log("\n REPEAT");
+      const trans = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [{
+          role: "user",
+          content: `Repeat the above request on this array and make sure that all the fields (MSA, MSAtoD) are completed: ${JSON.stringify({ tmpArray })}`
+        }],
+        temperature: 0.7
+      });
+      result = trans.choices[0].message.content;
+    }
+  }
+ 
+  result = result["tmpArray"];
+ 
+  console.log("\n Result:", result);
+ 
+  //console.log("---------------- result array after parse ----------------- \n", result);
+  //console.log("---------------- end result array after parse ----------------- \n");
+ 
+  for (let j = 0; j < result.length; j++) {
+    const data = { MSA: result[j].MSA, MSAtoD: result[j].MSAtoD};
+    await csvWriter.writeRecords([data]);
+    console.log('CSV record written successfully');
+  }
+ 
+}
+ 
